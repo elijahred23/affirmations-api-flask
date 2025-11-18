@@ -1,6 +1,7 @@
+from flask import Flask, jsonify, send_from_directory
 import json
 import random
-from flask import Flask, jsonify
+import os
 
 app = Flask(__name__)
 
@@ -32,16 +33,12 @@ def get_affirmations():
         "affirmations": AFFIRMATIONS
     })
 
-
-@app.route("/", methods=["GET"])
-def root():
-    return jsonify({
-        "message": "Welcome to the Affirmations API!",
-        "endpoints": [
-            {"endpoint": "/affirmation", "method": "GET"},
-            {"endpoint": "/affirmations", "method": "GET"},
-        ],
-    })
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve_frontend(path):
+    if path != "" and os.path.exists(f"static/{path}"):
+        return send_from_directory("static", path)
+    return send_from_directory("static", "index.html")
 
 
 if __name__ == "__main__":
