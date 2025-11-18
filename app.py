@@ -1,60 +1,44 @@
 
-name: CI/CD Pipeline
+from flask import Flask, jsonify
+import random
 
-on:
-  push:
-    branches: ["main"]
-  workflow_dispatch:
+app = Flask(__name__)
 
-jobs:
-  build-and-push:
-    name: Build & Push Docker Image
-    runs-on: ubuntu-latest
+AFFIRMATIONS = [
+    "You are capable of amazing things.",
+    "You are enough just as you are.",
+    "You are growing and improving every day.",
+    "You are stronger than you think.",
+    "Your work and effort matter.",
+    "Your potential is limitless.",
+    "You deserve good things.",
+    "You are improving, even on tough days.",
+]
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+# Return a single random affirmation
+@app.route("/affirmation", methods=["GET"])
+def get_affirmation():
+    return jsonify({
+        "affirmation": random.choice(AFFIRMATIONS)
+    })
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+# Return ALL affirmations
+@app.route("/affirmations", methods=["GET"])
+def get_affirmations():
+    return jsonify({
+        "affirmations": AFFIRMATIONS
+    })
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/affirmations-api-flask:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/affirmations-api-flask:${{ github.sha }}
+# Root endpoint with API directory
+@app.route("/", methods=["GET"])
+def root():
+    return jsonify({
+        "message": "Welcome to the Affirmations API!",
+        "endpoints": [
+            {"endpoint": "/affirmation", "method": "GET"},
+            {"endpoint": "/affirmations", "method": "GET"},
+        ]
+    })
 
-  deploy:
-    name: Deploy to DigitalOcean Kubernetes
-    needs: build-and-push
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # Install DOCTL (binary, NOT snap)
-      - name: Install doctl
-        run: |
-          curl -sL https://github.com/digitalocean/doctl/releases/download/v1.108.0/doctl-1.108.0-linux-amd64.tar.gz -o doctl.tar.gz
-          tar -xzf doctl.tar.gz
-          sudo mv doctl /usr/local/bin/
-
-      - name: Authenticate doctl
-        run: doctl auth init -t "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}"
-
-      - name: Fetch kubeconfig for DigitalOcean cluster
-        run: doctl kubernetes cluster kubeconfig save eli-k8s
-
-      - name: Deploy new image version to Kubernetes
-        run: |
-          kubectl set image deployment/affirmations-api affirmations-api=${{ secrets.DOCKERHUB_USERNAME }}/affirmations-api-flask:${{ github.sha }}
-
-      - name: Wait for Kubernetes rollout to complete
-        run: kubectl rollout status deployment/affirmations-api --timeout=120s
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
