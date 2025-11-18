@@ -16,12 +16,26 @@ def get_affirmation():
     return jsonify({
         "affirmation": random.choice(AFFIRMATIONS)
     })
+@app.route("/affirmations", methods=["GET"])
+def get_affirmations():
+    return jsonify({
+            "affirmations": AFFIRMATIONS
+        })
 
 @app.route("/", methods=["GET"])
 def root():
     return jsonify({
         "message": "Welcome to the Affirmations API!",
-        "endpoint": "/affirmation"
+        "endpoints": [
+            {
+                endpoint: "/affirmation",
+                method: "GET"
+            },
+            {
+                endpoint: "/affirmations",
+                method: "GET"
+            },
+            ]
     })
 
 if __name__ == "__main__":
