@@ -1,18 +1,22 @@
-from flask import Flask, jsonify
+import json
 import random
+from flask import Flask, jsonify
 
 app = Flask(__name__)
 
-AFFIRMATIONS = [
-    "You are capable of amazing things.",
-    "You are enough just as you are.",
-    "You are growing and improving every day.",
-    "You are stronger than you think.",
-    "Your work and effort matter.",
-    "Your potential is limitless.",
-    "You deserve good things.",
-    "You are improving, even on tough days.",
-]
+
+def load_affirmations():
+    """Load affirmations from the JSON file."""
+    try:
+        with open("affirmations.json", "r") as file:
+            data = json.load(file)
+            return data.get("affirmations", [])
+    except Exception as e:
+        print(f"Error loading affirmations.json: {e}")
+        return []
+
+
+AFFIRMATIONS = load_affirmations()
 
 
 @app.route("/affirmation", methods=["GET"])
