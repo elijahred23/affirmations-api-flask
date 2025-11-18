@@ -28,14 +28,14 @@ def root():
         "message": "Welcome to the Affirmations API!",
         "endpoints": [
             {
-                endpoint: "/affirmation",
-                method: "GET"
+                "endpoint": "/affirmation",
+                "method": "GET"
             },
             {
-                endpoint: "/affirmations",
-                method: "GET"
+                "endpoint": "/affirmations",
+                "method": "GET"
             },
-            ]
+        ]
     })
 
 if __name__ == "__main__":
