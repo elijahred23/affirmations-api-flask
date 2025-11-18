@@ -1,7 +1,7 @@
-from flask import Flask, jsonify, send_from_directory
 import json
 import random
 import os
+from flask import Flask, jsonify, send_from_directory
 
 app = Flask(__name__)
 
@@ -20,19 +20,21 @@ def load_affirmations():
 AFFIRMATIONS = load_affirmations()
 
 
-@app.route("/affirmation", methods=["GET"])
+@app.route("/api/affirmation", methods=["GET"])
 def get_affirmation():
     return jsonify({
         "affirmation": random.choice(AFFIRMATIONS)
     })
 
 
-@app.route("/affirmations", methods=["GET"])
+@app.route("/api/affirmations", methods=["GET"])
 def get_affirmations():
     return jsonify({
         "affirmations": AFFIRMATIONS
     })
 
+
+# SPA frontend serving (React/Vite built files)
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve_frontend(path):
