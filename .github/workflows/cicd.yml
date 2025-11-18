@@ -1,4 +1,3 @@
-
 name: CI/CD Pipeline
 
 on:
@@ -7,8 +6,31 @@ on:
   workflow_dispatch:
 
 jobs:
+
+  lint:
+    name: Lint Python Code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Flake8
+        run: pip install flake8
+
+      - name: Run Linter
+        run: |
+          echo "Running flake8..."
+          flake8 . --max-line-length=120 --exclude=.git,__pycache__,build,dist
+
   build-and-push:
     name: Build & Push Docker Image
+    needs: lint
     runs-on: ubuntu-latest
 
     steps:
@@ -39,7 +61,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Install DOCTL (binary, NOT snap)
       - name: Install doctl
         run: |
           curl -sL https://github.com/digitalocean/doctl/releases/download/v1.108.0/doctl-1.108.0-linux-amd64.tar.gz -o doctl.tar.gz
@@ -49,12 +70,12 @@ jobs:
       - name: Authenticate doctl
         run: doctl auth init -t "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}"
 
-      - name: Fetch kubeconfig for DigitalOcean cluster
+      - name: Fetch kubeconfig
         run: doctl kubernetes cluster kubeconfig save eli-k8s
 
-      - name: Deploy new image version to Kubernetes
+      - name: Deploy new image version
         run: |
           kubectl set image deployment/affirmations-api affirmations-api=${{ secrets.DOCKERHUB_USERNAME }}/affirmations-api-flask:${{ github.sha }}
 
-      - name: Wait for Kubernetes rollout to complete
+      - name: Wait for rollout
         run: kubectl rollout status deployment/affirmations-api --timeout=120s
