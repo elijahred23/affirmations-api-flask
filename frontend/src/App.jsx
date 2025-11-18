@@ -183,5 +183,3 @@ const styles = {
     fontSize: "17px",
   },
 };
-
-export default App;
