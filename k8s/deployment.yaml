@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: affirmations-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: affirmations-api
+  template:
+    metadata:
+      labels:
+        app: affirmations-api
+    spec:
+      containers:
+        - name: affirmations-api
+          image: elijahred23/affirmations-api-flask:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: affirmations-api
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 5000
+  selector:
+    app: affirmations-api
+

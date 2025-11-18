@@ -1,0 +1,57 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/affirmations-api-flask:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/affirmations-api-flask:${{ github.sha }}
+
+  deploy:
+    name: Deploy to DigitalOcean Kubernetes
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install doctl
+        run: sudo snap install doctl --classic
+
+      - name: Authenticate doctl
+        run: doctl auth init -t "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}"
+
+      - name: Fetch kubeconfig
+        run: doctl kubernetes cluster kubeconfig save eli-k8s
+
+      - name: Set image on deployment
+        run: |
+          kubectl set image deployment/affirmations-api affirmations-api=${{ secrets.DOCKERHUB_USERNAME }}/affirmations-api-flask:latest
+
+      - name: Wait for rollout to finish
+        run: |
+          kubectl rollout status deployment/affirmations-api --timeout=120s
+
