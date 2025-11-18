@@ -1,4 +1,3 @@
-
 from flask import Flask, jsonify
 import random
 
@@ -15,21 +14,21 @@ AFFIRMATIONS = [
     "You are improving, even on tough days.",
 ]
 
-# Return a single random affirmation
+
 @app.route("/affirmation", methods=["GET"])
 def get_affirmation():
     return jsonify({
         "affirmation": random.choice(AFFIRMATIONS)
     })
 
-# Return ALL affirmations
+
 @app.route("/affirmations", methods=["GET"])
 def get_affirmations():
     return jsonify({
         "affirmations": AFFIRMATIONS
     })
 
-# Root endpoint with API directory
+
 @app.route("/", methods=["GET"])
 def root():
     return jsonify({
@@ -37,8 +36,9 @@ def root():
         "endpoints": [
             {"endpoint": "/affirmation", "method": "GET"},
             {"endpoint": "/affirmations", "method": "GET"},
-        ]
+        ],
     })
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
